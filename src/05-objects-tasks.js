@@ -20,8 +20,12 @@
  *    console.log(r.height);      // => 20
  *    console.log(r.getArea());   // => 200
  */
-function Rectangle(/* width, height */) {
-  throw new Error('Not implemented');
+function Rectangle(width, height) {
+  this.width = width
+  this.height = height
+  this.getArea = function () {
+    return this.width * this.height
+  }
 }
 
 
@@ -35,8 +39,8 @@ function Rectangle(/* width, height */) {
  *    [1,2,3]   =>  '[1,2,3]'
  *    { width: 10, height : 20 } => '{"height":10,"width":20}'
  */
-function getJSON(/* obj */) {
-  throw new Error('Not implemented');
+function getJSON(obj) {
+  return JSON.stringify(obj)
 }
 
 
@@ -51,8 +55,10 @@ function getJSON(/* obj */) {
  *    const r = fromJSON(Circle.prototype, '{"radius":10}');
  *
  */
-function fromJSON(/* proto, json */) {
-  throw new Error('Not implemented');
+function fromJSON(proto, json) {
+  const obj = JSON.parse(json)
+  Object.setPrototypeOf(obj, proto)
+  return obj
 }
 
 
@@ -111,34 +117,122 @@ function fromJSON(/* proto, json */) {
  */
 
 const cssSelectorBuilder = {
-  element(/* value */) {
-    throw new Error('Not implemented');
+  elements: [],
+
+element(value) {
+   const newBuilder = Object.create(this)
+   newBuilder.elements = [...this.elements, new ElementSelector(value)]
+   return newBuilder;
   },
 
-  id(/* value */) {
-    throw new Error('Not implemented');
+  id(value) {
+    const newBuilder = Object.create(this)
+    newBuilder.elements = [...this.elements, new IdSelector(value)]
+    return newBuilder;
   },
 
-  class(/* value */) {
-    throw new Error('Not implemented');
+  class(value) {
+    const newBuilder = Object.create(this)
+    newBuilder.elements = [...this.elements, new ClassSelector(value)]
+    return newBuilder;
   },
 
-  attr(/* value */) {
-    throw new Error('Not implemented');
+  attr(value) {
+    const newBuilder = Object.create(this)
+    newBuilder.elements = [...this.elements, new AttributeClass(value)]
+    return newBuilder;
   },
 
-  pseudoClass(/* value */) {
-    throw new Error('Not implemented');
+  pseudoClass(value) {
+    const newBuilder = Object.create(this)
+    newBuilder.elements = [...this.elements, new PseudoClass(value)]
   },
 
-  pseudoElement(/* value */) {
-    throw new Error('Not implemented');
+  pseudoElement(value) {
+    const newBuilder = Object.create(this)
+    newBuilder.elements = [...this.elements, new PseudoElement(value)]
+    return newBuilder;
   },
 
-  combine(/* selector1, combinator, selector2 */) {
-    throw new Error('Not implemented');
+  combine( selector1, combinator, selector2 ) {
+   const newBuilder = Object.create(this)
+   newBuilder.elements = [...this.elements, selector1,combinator,selector2]
+   return newBuilder
   },
+  stringify(){
+    return this.elements.map(element => element.stringify()).join('')
+  }
 };
+class ElementSelector {
+  constructor(value) {
+    this.value = value
+  }
+  stringify() {
+    return this.value
+  }
+}
+class IdSelector {
+  constructor(value) {
+    this.value = value
+  }
+  stringify() {
+    return `#${this.value}`
+  }
+}
+class ClassSelector {
+  constructor(value) {
+    this.value = value
+  }
+  stringify() {
+    return `.${this.value}`
+  }
+}
+class AttributeClass {
+  constructor(name, operator, value) {
+    this.name = name;
+    this.operator = operator;
+    this.value = value;
+  }
+  stringify() {
+    if (this.operator === "=") {
+      return `[${this.name}="${this.value}"]`
+    } else {
+      return `[${this.name}${this.operator}"${this.value}"]`
+    }
+  }
+}
+class PseudoElement {
+  constructor(selector, type) {
+    this.selector = selector
+    this.type = type
+  }
+  stringify() {
+    switch (this.type) {
+      case "first":
+        return `::first-child ${this.selector}`
+      case "last":
+        return `::last-child ${this.selector}`
+      default:
+        throw new Error("Invalid pseudo element")
+    }
+  }
+}
+class PseudoClass {
+  constructor(selector, type, b, c) {
+    this.selector = selector
+    this.type = type
+    this.b = b
+    this.c = c
+  }
+  stringify() {
+    switch (this.type) {
+      case 'nth':
+        return `nth-child(${this.b}n+${this.c}) ${this.selector}`
+      default:
+        return `${this.selector}:${this.type}`;
+    }
+  }
+}
 
 
 module.exports = {
